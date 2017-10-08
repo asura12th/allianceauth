@@ -11,7 +11,7 @@ import groupmanagement.views
 import optimer.views
 import timerboard.views
 import fleetactivitytracking.views
-import fleetup.views
+import fleetup.urls
 import srp.views
 import notifications.views
 import hrapplications.views
@@ -55,11 +55,14 @@ urlpatterns = [
         name='auth_srp_fleet_mark_completed'),
     url(r'^srp_fleet_mark_uncompleted/(\w+)', srp.views.srp_fleet_mark_uncompleted,
         name='auth_srp_fleet_mark_uncompleted'),
-    url(r'^srp_request_remove/(\w+)', srp.views.srp_request_remove,
+    url(r'^srp_request_remove/', srp.views.srp_request_remove,
         name="auth_srp_request_remove"),
-    url(r'srp_request_approve/(\w+)', srp.views.srp_request_approve,
+    url(r'srp_request_approve/', srp.views.srp_request_approve,
         name='auth_srp_request_approve'),
-    url(r'srp_request_reject/(\w+)', srp.views.srp_request_reject, name='auth_srp_request_reject'),
+    url(r'srp_request_reject/', srp.views.srp_request_reject, 
+        name='auth_srp_request_reject'),
+    url(_(r'srp_request_amount_update/(\w+)'), srp.views.srp_request_update_amount,
+        name="auth_srp_request_update_amount"),
 
     # Notifications
     url(r'^remove_notifications/(\w+)/$', notifications.views.remove_notification, name='auth_remove_notification'),
@@ -72,12 +75,7 @@ urlpatterns = [
 urlpatterns += i18n_patterns(
 
     # Fleetup
-    url(r'^fleetup/$', fleetup.views.fleetup_view, name='auth_fleetup_view'),
-    url(r'^fleetup/fittings/$', fleetup.views.fleetup_fittings, name='auth_fleetup_fittings'),
-    url(r'^fleetup/fittings/(?P<fittingnumber>[0-9]+)/$', fleetup.views.fleetup_fitting, name='auth_fleetup_fitting'),
-    url(r'^fleetup/doctrines/$', fleetup.views.fleetup_doctrines, name='auth_fleetup_doctrines'),
-    url(r'^fleetup/characters/$', fleetup.views.fleetup_characters, name='auth_fleetup_characters'),
-    url(r'^fleetup/doctrines/(?P<doctrinenumber>[0-9]+)/$', fleetup.views.fleetup_doctrine, name='auth_fleetup_doctrine'),
+    url(r'^fleetup/', include(fleetup.urls.urlpatterns)),
 
     # Authentication
     url(_(r'^login_user/'), authentication.views.login_user, name='auth_login_user'),
@@ -179,8 +177,6 @@ urlpatterns += i18n_patterns(
     url(_(r'^srp_fleet_add_view/$'), srp.views.srp_fleet_add_view, name='auth_srp_fleet_add_view'),
     url(_(r'^srp_fleet_edit/(\w+)$'), srp.views.srp_fleet_edit_view, name='auth_srp_fleet_edit_view'),
     url(_(r'^srp_request/(\w+)'), srp.views.srp_request_view, name='auth_srp_request_view'),
-    url(_(r'srp_request_amount_update/(\w+)'), srp.views.srp_request_update_amount_view,
-        name="auth_srp_request_update_amount_view"),
 
     # Tools
     url(_(r'^tool/fleet_formatter_tool/$'), services.views.fleet_formatter_view,
@@ -193,6 +189,9 @@ urlpatterns += i18n_patterns(
     # FleetActivityTracking (FAT)
     url(r'^fat/$', fleetactivitytracking.views.fatlink_view, name='auth_fatlink_view'),
     url(r'^fat/statistics/$', fleetactivitytracking.views.fatlink_statistics_view, name='auth_fatlink_view_statistics'),
+    url(r'^fat/statistics/corp/(\w+)$', fleetactivitytracking.views.fatlink_statistics_corp_view, name='auth_fatlink_view_statistics_corp'),
+    url(r'^fat/statistics/corp/(?P<corpid>\w+)/(?P<year>[0-9]+)/(?P<month>[0-9]+)/', fleetactivitytracking.views.fatlink_statistics_corp_view,
+        name='auth_fatlink_view_statistics_corp_month'),
     url(r'^fat/statistics/(?P<year>[0-9]+)/(?P<month>[0-9]+)/$', fleetactivitytracking.views.fatlink_statistics_view,
         name='auth_fatlink_view_statistics_month'),
     url(r'^fat/user/statistics/$', fleetactivitytracking.views.fatlink_personal_statistics_view,

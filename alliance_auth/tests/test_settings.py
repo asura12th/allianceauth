@@ -4,13 +4,9 @@ Alliance Auth Test Suite Django settings.
 
 import os
 
-import djcelery
-
 from django.contrib import messages
 
 import alliance_auth
-
-djcelery.setup_loader()
 
 # Use nose to run all tests
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
@@ -18,6 +14,7 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     #'--with-coverage',
     #'--cover-package=',
+    #'--exe',  # If your tests need this to be found/run, check they py files are not chmodded +x
 ]
 
 # Celery configuration
@@ -40,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'djcelery',
+    'django_celery_beat',
     'bootstrapform',
     'authentication',
     'services',
@@ -52,6 +49,7 @@ INSTALLED_APPS = [
     'optimer',
     'corputils',
     'fleetactivitytracking',
+    'fleetup',
     'notifications',
     'esi',
     'permissions_tool',
@@ -400,12 +398,12 @@ TEAMSPEAK3_PUBLIC_URL = os.environ.get('AA_TEAMSPEAK3_PUBLIC_URL', 'example.com'
 # DISCORD_CALLBACK_URL - oauth callback url
 # DISCORD_SYNC_NAMES - enable to force discord nicknames to be set to eve char name (bot needs Manage Nicknames permission)
 ######################################
-DISCORD_GUILD_ID = os.environ.get('AA_DISCORD_GUILD_ID', '')
-DISCORD_BOT_TOKEN = os.environ.get('AA_DISCORD_BOT_TOKEN', '')
-DISCORD_INVITE_CODE = os.environ.get('AA_DISCORD_INVITE_CODE', '')
-DISCORD_APP_ID = os.environ.get('AA_DISCORD_APP_ID', '')
-DISCORD_APP_SECRET = os.environ.get('AA_DISCORD_APP_SECRET', '')
-DISCORD_CALLBACK_URL = os.environ.get('AA_DISCORD_CALLBACK_URL', 'http://example.com/discord_callback')
+DISCORD_GUILD_ID = os.environ.get('AA_DISCORD_GUILD_ID', '0118999')
+DISCORD_BOT_TOKEN = os.environ.get('AA_DISCORD_BOT_TOKEN', 'bottoken')
+DISCORD_INVITE_CODE = os.environ.get('AA_DISCORD_INVITE_CODE', 'invitecode')
+DISCORD_APP_ID = os.environ.get('AA_DISCORD_APP_ID', 'appid')
+DISCORD_APP_SECRET = os.environ.get('AA_DISCORD_APP_SECRET', 'secret')
+DISCORD_CALLBACK_URL = os.environ.get('AA_DISCORD_CALLBACK_URL', 'http://example.com/discord/callback')
 DISCORD_SYNC_NAMES = 'True' == os.environ.get('AA_DISCORD_SYNC_NAMES', 'False')
 
 ######################################

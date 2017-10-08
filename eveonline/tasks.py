@@ -1,10 +1,8 @@
 from __future__ import unicode_literals
 from django.conf import settings
-from celery.task import periodic_task
 from django.contrib.auth.models import User
 from notifications import notify
 from celery import task
-from celery.task.schedules import crontab
 from authentication.models import AuthServicesInfo
 from eveonline.managers import EveManager
 from eveonline.models import EveApiKeyPair
@@ -17,10 +15,12 @@ from authentication.tasks import set_state
 import logging
 import evelink
 
+from alliance_auth.celeryapp import app
+
 logger = logging.getLogger(__name__)
 
 
-@task
+@app.task
 def refresh_api(api):
     logger.debug('Running update on api key %s' % api.api_id)
     still_valid = True
@@ -36,7 +36,7 @@ def refresh_api(api):
                 EveManager.create_character_obj(c, api.user, api.api_id)
         current_chars = EveCharacter.objects.filter(api_id=api.api_id)
         for c in current_chars:
-            if not int(c.character_id) in [c.id for c in characters]:
+            if not int(c.character_id) in [d.id for d in characters]:
                 logger.info("Character %s no longer found on API ID %s" % (c, api.api_id))
                 c.delete()
     except evelink.api.APIError as e:
@@ -60,7 +60,7 @@ def refresh_api(api):
                    api.api_id, e.required_mask, e.api_mask), level="danger")
         still_valid = False
     except EveApiManager.ApiServerUnreachableError as e:
-        logger.warn("Error updating API %s\n%s" % (api.api_id, str(e)))
+        logger.warning("Error updating API %s\n%s" % (api.api_id, str(e)))
     finally:
         if not still_valid:
             EveManager.delete_characters_by_api_id(api.api_id, api.user.id)
@@ -70,12 +70,13 @@ def refresh_api(api):
                    level="danger")
 
 
-@task
-def refresh_user_apis(user):
+@app.task
+def refresh_user_apis(pk):
+    user = User.objects.get(pk=pk)
     logger.debug('Refreshing all APIs belonging to user %s' % user)
     apis = EveApiKeyPair.objects.filter(user=user)
     for x in apis:
-        refresh_api(x)
+        refresh_api.apply(args=(x,))
     # Check our main character
     auth = AuthServicesInfo.objects.get(user=user)
     if auth.main_char_id:
@@ -91,28 +92,28 @@ def refresh_user_apis(user):
     set_state(user)
 
 
-@periodic_task(run_every=crontab(minute=0, hour="*/3"))
+@app.task
 def run_api_refresh():
     if not EveApiManager.check_if_api_server_online():
         logger.warn("Aborted scheduled API key refresh: API server unreachable")
         return
 
     for u in User.objects.all():
-        refresh_user_apis.delay(u)
+        refresh_user_apis.delay(u.pk)
 
 
-@task
+@app.task
 def update_corp(id, is_blue=None):
     EveManager.update_corporation(id, is_blue=is_blue)
 
 
-@task
+@app.task
 def update_alliance(id, is_blue=None):
     EveManager.update_alliance(id, is_blue=is_blue)
     EveManager.populate_alliance(id)
 
 
-@periodic_task(run_every=crontab(minute=0, hour="*/2"))
+@app.task
 def run_corp_update():
     if not EveApiManager.check_if_api_server_online():
         logger.warn("Aborted updating corp and alliance models: API server unreachable")
@@ -123,7 +124,7 @@ def run_corp_update():
         is_blue = True if corp_id in settings.STR_BLUE_CORP_IDS else False
         try:
             if EveCorporationInfo.objects.filter(corporation_id=corp_id).exists():
-                update_corp(corp_id, is_blue=is_blue)
+                update_corp.apply(args=(corp_id,), kwargs={'is_blue': is_blue})
             else:
                 EveManager.create_corporation(corp_id, is_blue=is_blue)
         except ObjectNotFound:

@@ -13,15 +13,12 @@ class optimer(models.Model):
 
     doctrine = models.CharField(max_length=254, default="")
     system = models.CharField(max_length=254, default="")
-    location = models.CharField(max_length=254, default="")
     start = models.DateTimeField(default=datetime.now)
     duration = models.CharField(max_length=25, default="")
     operation_name = models.CharField(max_length=254, default="")
     fc = models.CharField(max_length=254, default="")
-    details = models.CharField(max_length=254, default="")
     post_time = models.DateTimeField(default=timezone.now)
     eve_character = models.ForeignKey(EveCharacter)
 
     def __str__(self):
-        output = self.operation_name
-        return output.encode('utf-8')
+        return self.operation_name
